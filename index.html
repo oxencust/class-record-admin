@@ -366,7 +366,7 @@
         .modal-overlay.show { opacity: 1; visibility: visible; }
         .modal-container {
             width: 100%;
-            max-width: 600px;
+            max-width: 720px;
             max-height: 90vh;
             background: var(--white);
             border-radius: var(--radius-lg);
@@ -421,62 +421,117 @@
         }
         .btn-secondary { background: var(--gray-light); color: var(--gray-dark); }
 
-        /* 詳情內容 */
-        .detail-section { margin-bottom: var(--spacing-lg); }
-        .detail-section:last-child { margin-bottom: 0; }
-        .detail-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--green-dark);
-            margin-bottom: var(--spacing-sm);
-            padding-bottom: var(--spacing-xs);
-            border-bottom: 2px solid var(--green-light);
-        }
-        .detail-grid {
+        /* ====== 樣板 D：雙欄對照佈局 ====== */
+        .detail-two-col {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-sm);
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+            min-height: 0;
         }
-        .detail-item {
-            background: var(--gray-light);
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-        }
-        .detail-item label {
-            font-size: 11px;
-            color: var(--gray);
-            display: block;
-            margin-bottom: 2px;
-        }
-        .detail-item span { font-size: 14px; font-weight: 500; }
-        .detail-item.full { grid-column: span 2; }
-
-        .detail-photos {
+        .detail-col-left {
             display: flex;
-            gap: var(--spacing-sm);
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: var(--spacing-md);
         }
-        .detail-photo {
-            width: 100px; height: 100px;
+        .detail-col-right {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        /* 主照片區 */
+        .detail-main-photo {
+            width: 100%;
+            aspect-ratio: 4/3;
             border-radius: var(--radius-md);
             overflow: hidden;
+            background: var(--gray-light);
             cursor: pointer;
-            border: 2px solid var(--gray-light);
+            position: relative;
+        }
+        .detail-main-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .detail-main-photo .photo-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+        }
+        .detail-thumb-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .detail-thumb {
+            width: 52px; height: 52px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
             transition: border-color 0.2s;
         }
-        .detail-photo:hover { border-color: var(--green); }
-        .detail-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .detail-thumb:hover, .detail-thumb.active { border-color: var(--green); }
+        .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        /* 無照片佔位 */
+        .detail-no-photo {
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: var(--radius-md);
+            background: var(--gray-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+        .detail-no-photo .icon { font-size: 40px; margin-bottom: 6px; }
+        .detail-no-photo .text { font-size: 13px; }
 
-        .detail-text {
+        /* 資訊列表 */
+        .detail-info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .detail-info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        .detail-info-row:last-child { border-bottom: none; }
+        .detail-info-row .info-label {
+            width: 70px;
+            flex-shrink: 0;
+            font-size: 12px;
+            color: var(--gray);
+            font-weight: 500;
+            padding-top: 1px;
+        }
+        .detail-info-row .info-value {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        /* 訓練內容區 */
+        .detail-notes-box {
             background: var(--blue-light);
             padding: var(--spacing-md);
             border-radius: var(--radius-md);
             border-left: 3px solid var(--blue);
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
             white-space: pre-wrap;
         }
-
+        /* 狀態標籤 */
         .status-tags { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
         .status-tag {
             padding: 4px 10px;
@@ -487,8 +542,27 @@
         .status-tag.normal { background: var(--green-light); color: var(--green-dark); }
         .status-tag.warning { background: var(--yellow-light); color: var(--yellow-dark); }
         .status-tag.danger { background: var(--red-light); color: var(--pink-dark); }
-
-        .star-display { color: var(--yellow); font-size: 18px; letter-spacing: 2px; }
+        .star-display { color: var(--yellow); font-size: 16px; letter-spacing: 2px; }
+        /* 需行政關心 */
+        .admin-alert {
+            background: var(--red-light);
+            border-left: 3px solid var(--red);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .admin-alert-title {
+            font-weight: 600;
+            color: var(--pink-dark);
+            margin-bottom: 4px;
+        }
+        /* 響應式：小螢幕改回單欄 */
+        @media (max-width: 520px) {
+            .detail-two-col {
+                grid-template-columns: 1fr;
+            }
+        }
 
         /* Toast */
         .toast {
@@ -566,8 +640,6 @@
             .class-type-tab { min-width: calc(50% - 4px); }
             .stats-bar { flex-wrap: wrap; }
             .stat-chip { min-width: calc(50% - 4px); }
-            .detail-grid { grid-template-columns: 1fr; }
-            .detail-item.full { grid-column: span 1; }
         }
     </style>
 </head>
@@ -724,6 +796,7 @@
         let totalRecords = 0;
         let pageSize = 50;
         let memberFilterTimeout = null;
+        let coachFilterTimeout = null;
         let coachFilterValue = '';
         let currentLightboxPhotos = [];
         let currentLightboxIndex = 0;
@@ -754,8 +827,6 @@
             document.getElementById('currentDate').textContent =
                 now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
         }
-
-        let coachFilterTimeout = null;
 
         function setupListeners() {
             const memberInput = document.getElementById('memberFilterInput');
@@ -1018,116 +1089,140 @@
             const photos = record.photos ? record.photos.split(',').filter(p => p.trim()) : [];
             const stars = '★'.repeat(record.mental_state_rating || 0) + '☆'.repeat(5 - (record.mental_state_rating || 0));
 
-            let photosHtml = '';
+            // — 左欄：照片 —
+            let leftCol = '';
             if (photos.length > 0) {
-                photosHtml = `
-                    <div class="detail-section">
-                        <div class="detail-title">📷 課表照片</div>
-                        <div class="detail-photos">
+                const photosJson = JSON.stringify(photos).replace(/"/g, '&quot;');
+                leftCol = `
+                    <div class="detail-main-photo" onclick="openLightboxGallery(${photosJson}, 0)" id="detailMainPhoto">
+                        <img src="${photos[0].trim()}" alt="課表照片">
+                        ${photos.length > 1 ? `<div class="photo-badge">📷 ${photos.length} 張</div>` : ''}
+                    </div>
+                    ${photos.length > 1 ? `
+                        <div class="detail-thumb-row">
                             ${photos.map((url, i) => `
-                                <div class="detail-photo" onclick="openLightboxGallery(${JSON.stringify(photos).replace(/"/g, '&quot;')}, ${i})">
-                                    <img src="${url.trim()}" alt="課表照片 ${i+1}">
+                                <div class="detail-thumb ${i === 0 ? 'active' : ''}" onclick="switchMainPhoto('${url.trim()}', this, ${photosJson}, ${i})">
+                                    <img src="${url.trim()}" alt="縮圖 ${i+1}">
                                 </div>
                             `).join('')}
                         </div>
+                    ` : ''}
+                `;
+            } else {
+                leftCol = `
+                    <div class="detail-no-photo">
+                        <div class="icon">📷</div>
+                        <div class="text">尚無照片</div>
                     </div>
                 `;
             }
 
-            let textHtml = '';
+            // — 訓練內容 / 細項（放左欄照片下方）—
+            let notesHtml = '';
             if (record.notes && record.notes.trim()) {
-                textHtml = `
-                    <div class="detail-section">
-                        <div class="detail-title">📝 訓練內容</div>
-                        <div class="detail-text">${record.notes}</div>
+                notesHtml = `<div class="detail-notes-box">${record.notes}</div>`;
+            }
+            if (record.training_details) {
+                const detailStr = typeof record.training_details === 'object'
+                    ? JSON.stringify(record.training_details, null, 2)
+                    : record.training_details;
+                notesHtml += `<div class="detail-notes-box" style="border-left-color: var(--green);">${detailStr}</div>`;
+            }
+
+            // — 狀況標籤 —
+            let incidentHtml = '';
+            if (record.incident_types) {
+                const incidents = record.incident_types.split(',').filter(t => t.trim());
+                if (incidents.length > 0) {
+                    incidentHtml = `<div class="status-tags">` +
+                        incidents.map(inc => {
+                            const isNormal = inc.trim() === '無';
+                            return `<span class="status-tag ${isNormal ? 'normal' : 'danger'}">${inc.trim()}</span>`;
+                        }).join('') + `</div>`;
+                }
+            }
+
+            // — 右欄：資訊列表 —
+            let rightCol = `
+                <div class="detail-info-list">
+                    <div class="detail-info-row">
+                        <div class="info-label">📅 日期</div>
+                        <div class="info-value">${record.class_date}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">🕐 時間</div>
+                        <div class="info-value">${record.class_time || '-'}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">👤 學員</div>
+                        <div class="info-value">${record.member_name}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">🏋️ 教練</div>
+                        <div class="info-value">${record.coach_name}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">📋 課種</div>
+                        <div class="info-value">${config.name}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">⭐ 狀態</div>
+                        <div class="info-value"><span class="star-display">${stars}</span></div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">⏱️ 時長</div>
+                        <div class="info-value">${record.duration_minutes ? record.duration_minutes + ' 分鐘' : '-'}</div>
+                    </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">🕐 遲到</div>
+                        <div class="info-value">${record.is_late ? '<span class="status-tag warning">是</span>' : '<span class="status-tag normal">否</span>'}</div>
+                    </div>
+                    ${incidentHtml ? `
+                    <div class="detail-info-row">
+                        <div class="info-label">⚡ 狀況</div>
+                        <div class="info-value">${incidentHtml}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            // — 行政關心（跨雙欄底部）—
+            let adminAlert = '';
+            if (record.need_admin_followup) {
+                adminAlert = `
+                    <div class="admin-alert" style="grid-column: 1 / -1; margin-top: 4px;">
+                        <div class="admin-alert-title">⚠️ 需行政關心</div>
+                        <div>${record.admin_followup_notes || '（無備註）'}</div>
                     </div>
                 `;
             }
 
-            let incidentTags = '';
-            if (record.incident_types) {
-                const incidents = record.incident_types.split(',');
-                incidentTags = incidents.map(inc => {
-                    const isNormal = inc.trim() === '無' || !inc.trim();
-                    return inc.trim() ? `<span class="status-tag ${isNormal ? 'normal' : 'danger'}">${inc.trim()}</span>` : '';
-                }).join('');
-            }
-
+            // — 組合雙欄 —
             document.getElementById('modalBody').innerHTML = `
-                <div class="detail-section">
-                    <div class="detail-title">📋 基本資訊</div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <label>日期</label>
-                            <span>${record.class_date}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>時間</label>
-                            <span>${record.class_time || '-'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>學員</label>
-                            <span>${record.member_name}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>教練</label>
-                            <span>${record.coach_name}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>課種</label>
-                            <span>${config.name}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>課間狀態</label>
-                            <span class="star-display">${stars}</span>
-                        </div>
+                <div class="detail-two-col">
+                    <div class="detail-col-left">
+                        ${leftCol}
+                        ${notesHtml}
                     </div>
+                    <div class="detail-col-right">
+                        ${rightCol}
+                    </div>
+                    ${adminAlert}
                 </div>
-
-                ${photosHtml}
-
-                ${textHtml}
-
-                ${record.training_details ? `
-                    <div class="detail-section">
-                        <div class="detail-title">🎯 訓練細項</div>
-                        <div class="detail-text">${typeof record.training_details === 'object' ? JSON.stringify(record.training_details, null, 2) : record.training_details}</div>
-                    </div>
-                ` : ''}
-
-                <div class="detail-section">
-                    <div class="detail-title">📊 學員當日狀況</div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <label>是否遲到</label>
-                            <span>${record.is_late ? '是' : '否'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>上課時長</label>
-                            <span>${record.duration_minutes ? record.duration_minutes + ' 分鐘' : '-'}</span>
-                        </div>
-                        ${incidentTags ? `
-                        <div class="detail-item full">
-                            <label>課間狀況</label>
-                            <div class="status-tags" style="margin-top: 4px;">
-                                ${incidentTags}
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-
-                ${record.need_admin_followup ? `
-                    <div class="detail-section">
-                        <div class="detail-title" style="color: var(--pink-dark);">⚠️ 需行政關心</div>
-                        <div class="detail-text" style="background: var(--red-light); border-color: var(--red);">
-                            ${record.admin_followup_notes || '（無備註）'}
-                        </div>
-                    </div>
-                ` : ''}
             `;
 
             document.getElementById('detailModal').classList.add('show');
+        }
+
+        function switchMainPhoto(url, thumbEl, photos, index) {
+            document.querySelector('#detailMainPhoto img').src = url;
+            document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+            thumbEl.classList.add('active');
+            // 更新 click 事件
+            const photosJson = JSON.stringify(photos).replace(/"/g, '&quot;');
+            document.getElementById('detailMainPhoto').onclick = function() {
+                openLightboxGallery(photos, index);
+            };
         }
 
         function closeModal() {
