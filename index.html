@@ -972,6 +972,17 @@
         
         async function initLiff() {
             try {
+                // 優先從入口頁面帶過來的 URL 參數取得身份
+                const urlParams = new URLSearchParams(window.location.search);
+                const uidFromPortal = urlParams.get('uid');
+
+                if (uidFromPortal) {
+                    // 從入口進來，直接用 URL 參數的 uid
+                    await loadUserInfo(uidFromPortal);
+                    return;
+                }
+
+                // 獨立開啟時，走 LIFF 登入
                 await liff.init({ liffId: CONFIG.LIFF_ID });
                 if (!liff.isLoggedIn()) {
                     liff.login();
