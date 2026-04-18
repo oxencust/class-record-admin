@@ -1,2 +1,2 @@
 # class-record-admin
-主管課表查詢系統
+新版主管課表查詢系統
