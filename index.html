@@ -547,6 +547,70 @@
             line-height: 1.6;
             white-space: pre-wrap;
         }
+        /* 重訓動作卡（方案 B：動作 → 每組一列） */
+        .strength-exercises {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        .strength-exercise-card {
+            background: var(--white);
+            border-left: 3px solid var(--green);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .strength-exercise-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--green-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .strength-set-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .strength-set-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 4px 0;
+            color: var(--gray-dark);
+        }
+        .strength-set-num {
+            flex-shrink: 0;
+            width: 28px;
+            font-weight: 600;
+            color: var(--gray);
+            font-size: 12px;
+        }
+        .strength-set-content {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 10px;
+        }
+        .strength-set-content .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .strength-set-content .chip-label {
+            font-size: 11px;
+            color: var(--gray);
+        }
+        .strength-set-content .chip-value {
+            font-weight: 500;
+        }
+        @media (max-width: 480px) {
+            .strength-set-row { flex-wrap: wrap; }
+            .strength-set-content { gap: 2px 8px; }
+        }
         /* 狀態標籤 */
         .status-tags { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
         .status-tag {
@@ -1110,6 +1174,65 @@
         // ============================================
         // 查看詳情
         // ============================================
+        // HTML 安全跳脫
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 渲染重訓結構化內容（方案 B：動作卡 + 每組一列）
+        // 接 training_details 字串或物件；非預期格式回傳 null（讓呼叫端 fallback）
+        function renderStrengthExercises(td) {
+            let parsed;
+            try {
+                parsed = typeof td === 'string' ? JSON.parse(td) : td;
+            } catch (e) { return null; }
+            if (!parsed || !Array.isArray(parsed.exercises) || parsed.exercises.length === 0) return null;
+
+            const cards = parsed.exercises.map(ex => {
+                const name = escapeHtml(ex && ex.name ? ex.name : '(未命名動作)');
+                const setsArr = Array.isArray(ex && ex.sets) ? ex.sets : [];
+                const setsHtml = setsArr.length === 0
+                    ? '<div class="strength-set-row"><span class="chip-label">尚未填組數</span></div>'
+                    : setsArr.map((s, i) => {
+                        const chips = [];
+                        if (s && s.equipment) {
+                            chips.push(`<span class="chip"><span class="chip-value">${escapeHtml(s.equipment)}</span></span>`);
+                        }
+                        if (s && s.weight != null && s.weight !== '' && Number(s.weight) > 0) {
+                            chips.push(`<span class="chip"><span class="chip-value">${Number(s.weight)}</span><span class="chip-label">kg</span></span>`);
+                        }
+                        if (s && s.difficulty != null && s.difficulty !== '') {
+                            chips.push(`<span class="chip"><span class="chip-label">難</span><span class="chip-value">${escapeHtml(s.difficulty)}</span></span>`);
+                        }
+                        if (s && s.reps != null && s.reps !== '') {
+                            chips.push(`<span class="chip"><span class="chip-value">${escapeHtml(s.reps)}</span><span class="chip-label">次</span></span>`);
+                        }
+                        const content = chips.length > 0
+                            ? chips.join('<span class="chip-label">·</span>')
+                            : '<span class="chip-label">-</span>';
+                        return `
+                            <div class="strength-set-row">
+                                <span class="strength-set-num">#${i + 1}</span>
+                                <span class="strength-set-content">${content}</span>
+                            </div>
+                        `;
+                    }).join('');
+                return `
+                    <div class="strength-exercise-card">
+                        <div class="strength-exercise-name">🏋️ ${name}</div>
+                        <div class="strength-set-list">${setsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+            return `<div class="strength-exercises">${cards}</div>`;
+        }
+
         function viewRecord(recordId) {
             const record = allRecords.find(r => String(r.id) === String(recordId));
             if (!record) return;
@@ -1153,10 +1276,19 @@
                     notesInner += `<div class="detail-notes-box">${record.notes}</div>`;
                 }
                 if (record.training_details) {
-                    const detailStr = typeof record.training_details === 'object'
-                        ? JSON.stringify(record.training_details, null, 2)
-                        : record.training_details;
-                    notesInner += `<div class="detail-notes-box" style="border-left-color: var(--green);">${detailStr}</div>`;
+                    // 重訓：嘗試用方案 B 結構化渲染；解析失敗或無 exercises → fallback
+                    let strengthHtml = null;
+                    if (record.class_type === 'strength_training') {
+                        strengthHtml = renderStrengthExercises(record.training_details);
+                    }
+                    if (strengthHtml) {
+                        notesInner += strengthHtml;
+                    } else {
+                        const detailStr = typeof record.training_details === 'object'
+                            ? JSON.stringify(record.training_details, null, 2)
+                            : record.training_details;
+                        notesInner += `<div class="detail-notes-box" style="border-left-color: var(--green);">${detailStr}</div>`;
+                    }
                 }
                 contentHtml = `
                     <div class="detail-content-section">
@@ -1213,10 +1345,12 @@
                         <div class="info-label">⭐ 狀態</div>
                         <div class="info-value"><span class="star-display">${stars}</span></div>
                     </div>
+                    ${record.duration_minutes ? `
                     <div class="detail-info-row">
                         <div class="info-label">⏱️ 時長</div>
-                        <div class="info-value">${record.duration_minutes ? record.duration_minutes + ' 分鐘' : '-'}</div>
+                        <div class="info-value">${record.duration_minutes} 分鐘</div>
                     </div>
+                    ` : ''}
                     <div class="detail-info-row">
                         <div class="info-label">🕐 遲到</div>
                         <div class="info-value">${record.is_late ? '<span class="status-tag warning">是</span>' : '<span class="status-tag normal">否</span>'}</div>
