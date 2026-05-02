@@ -219,6 +219,96 @@
         .stat-chip.pilates .stat-chip-value { color: var(--blue-dark); }
         .stat-chip.stretching .stat-chip-value { color: var(--yellow-dark); }
 
+        /* 課程形式徽章（卡片角標） */
+        .timeline-date { position: relative; }
+        .timeline-date .format-corner {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--gray);
+            line-height: 1.4;
+            border: 1px solid var(--gray-light);
+            letter-spacing: 0.3px;
+        }
+        .timeline-date .format-corner.format-2 {
+            color: var(--yellow-dark);
+            border-color: var(--yellow);
+            background: var(--yellow-light);
+        }
+        .timeline-date .format-corner.format-3 {
+            color: var(--pink-dark);
+            border-color: var(--pink);
+            background: var(--pink-light);
+        }
+
+        /* 詳情頁 - 同場學員列 */
+        .participants-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: var(--gray-light);
+            border-radius: var(--radius-md);
+        }
+        .participants-bar.format-2 { background: var(--yellow-light); }
+        .participants-bar.format-3 { background: var(--pink-light); }
+        .participants-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gray-dark);
+            margin-right: 4px;
+        }
+        .participants-bar.format-2 .participants-label { color: var(--yellow-dark); }
+        .participants-bar.format-3 .participants-label { color: var(--pink-dark); }
+        .participants-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: var(--white);
+            color: var(--gray-dark);
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--gray-light);
+            transition: all 0.2s;
+        }
+        .participants-chip.clickable {
+            cursor: pointer;
+        }
+        .participants-chip.clickable:hover {
+            background: var(--green-light);
+            border-color: var(--green);
+            color: var(--green-dark);
+        }
+        .participants-chip.current {
+            background: var(--green);
+            color: var(--white);
+            border-color: var(--green-dark);
+            font-weight: 600;
+        }
+        .participants-bar.format-2 .participants-chip.current {
+            background: var(--yellow-dark);
+            border-color: var(--yellow-dark);
+        }
+        .participants-bar.format-3 .participants-chip.current {
+            background: var(--pink-dark);
+            border-color: var(--pink-dark);
+        }
+
+        /* 篩選列：第三個下拉欄需要更窄 */
+        .filter-row .filter-item.format-filter { flex: 0 0 110px; }
+        @media (max-width: 480px) {
+            .filter-row { flex-wrap: wrap; }
+            .filter-row .filter-item.format-filter { flex: 1 0 100%; }
+        }
+
         /* 分頁 */
         .pagination {
             display: flex;
@@ -781,6 +871,14 @@
                         <button type="button" class="filter-clear-btn" id="coachFilterClear" onclick="clearCoachFilter()" style="display:none;">✕</button>
                     </div>
                 </div>
+                <div class="filter-item format-filter">
+                    <select class="filter-select" id="sessionFormatFilter" onchange="onSessionFormatChange()">
+                        <option value="">全部形式</option>
+                        <option value="1-on-1">一對一</option>
+                        <option value="1-on-2">一對二</option>
+                        <option value="1-on-3">一對三</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -872,6 +970,7 @@
         let allRecords = [];
         let coachList = [];
         let selectedClassType = '';
+        let selectedSessionFormat = '';
         let currentPage = 1;
         let totalRecords = 0;
         let pageSize = 50;
@@ -880,6 +979,42 @@
         let coachFilterValue = '';
         let currentLightboxPhotos = [];
         let currentLightboxIndex = 0;
+
+        // ============================================
+        // 課程形式 / 同場學員 工具
+        // ============================================
+        // 將 session_format 對應到顯示資訊。NULL/未知 → 視為一對一。
+        function getSessionFormatInfo(record) {
+            const fmt = record && record.session_format ? String(record.session_format) : '1-on-1';
+            if (fmt === '1-on-2') return { value: '1-on-2', label: '一對二', cls: 'format-2', short: '1:2' };
+            if (fmt === '1-on-3') return { value: '1-on-3', label: '一對三', cls: 'format-3', short: '1:3' };
+            return { value: '1-on-1', label: '一對一', cls: 'format-1', short: '1:1' };
+        }
+
+        // 解析 record.participants（可能是 JSON 字串、陣列，或不存在）
+        function getRecordParticipants(record) {
+            if (!record) return [];
+            const raw = record.participants;
+            if (!raw) return [];
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string') {
+                try {
+                    const parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) { return []; }
+            }
+            return [];
+        }
+
+        // 同場其他紀錄：依 group_session_id 在 allRecords 內配對
+        function findCoSessionRecords(record) {
+            if (!record || !record.group_session_id) return [];
+            return allRecords.filter(r =>
+                r.group_session_id &&
+                r.group_session_id === record.group_session_id &&
+                String(r.id) !== String(record.id)
+            );
+        }
 
         // ============================================
         // 初始化
@@ -1006,6 +1141,13 @@
             loadRecords();
         }
 
+        function onSessionFormatChange() {
+            const sel = document.getElementById('sessionFormatFilter');
+            selectedSessionFormat = sel ? sel.value : '';
+            currentPage = 1;
+            loadRecords();
+        }
+
         function clearCoachFilter() {
             document.getElementById('coachFilterInput').value = '';
             document.getElementById('coachFilterClear').style.display = 'none';
@@ -1039,6 +1181,7 @@
                 const memberFilter = document.getElementById('memberFilterInput').value.trim();
                 if (memberFilter) params.memberFilter = memberFilter;
                 if (coachFilterValue) params.coachFilter = coachFilterValue;
+                if (selectedSessionFormat) params.sessionFormat = selectedSessionFormat;
 
                 const data = await callEdge('getClassRecords', params);
                 allRecords = data.success ? (data.records || []) : [];
@@ -1135,6 +1278,8 @@
             const weekday = WEEKDAYS[date.getDay()];
             const config = CLASS_TYPE_CONFIG[record.class_type] || { icon: '📋', class: '' };
             const hasPhoto = record.photos && record.photos.trim();
+            const fmtInfo = getSessionFormatInfo(record);
+            const fmtCornerHtml = `<div class="format-corner ${fmtInfo.cls}" title="${fmtInfo.label}">${fmtInfo.short}</div>`;
 
             // 訓練主軸縮寫標籤：肩背→肩、核心→核、臀腿→臀、柔軟度→柔、其他→其
             let focusChipsHtml = '';
@@ -1155,6 +1300,7 @@
 
             return `
                 <div class="timeline-date ${config.class} ${hasPhoto ? 'has-photo' : ''}" onclick="viewRecord('${record.id}')">
+                    ${fmtCornerHtml}
                     <div class="month">${month}月</div>
                     <div class="day">${day}</div>
                     <div class="weekday">週${weekday}</div>
@@ -1238,6 +1384,7 @@
             if (!record) return;
 
             const config = CLASS_TYPE_CONFIG[record.class_type] || { name: record.class_type || '未知', class: '' };
+            const fmtInfo = getSessionFormatInfo(record);
 
             const header = document.getElementById('modalHeader');
             header.className = 'modal-header ' + config.class;
@@ -1245,6 +1392,52 @@
 
             const photos = record.photos ? record.photos.split(',').filter(p => p.trim()) : [];
             const stars = '★'.repeat(record.mental_state_rating || 0) + '☆'.repeat(5 - (record.mental_state_rating || 0));
+
+            // — 同場參與學員列（僅當有同場其他學員時顯示）—
+            const coRecords = findCoSessionRecords(record);
+            const participantsArr = getRecordParticipants(record);
+            let participantsBar = '';
+            if (coRecords.length > 0 || participantsArr.length > 1 || fmtInfo.value !== '1-on-1') {
+                // 蒐集所有學員：當前 + 同場（去重）
+                const seen = new Set();
+                const chips = [];
+
+                // 當前學員
+                const currentMid = record.member_id != null ? String(record.member_id) : null;
+                if (currentMid) seen.add(currentMid);
+                chips.push(`<span class="participants-chip current">${escapeHtml(record.member_name || '當前學員')}</span>`);
+
+                // 從 allRecords 配對的同場其他學員（可點擊跳轉）
+                coRecords.forEach(r => {
+                    const mid = r.member_id != null ? String(r.member_id) : null;
+                    if (mid && seen.has(mid)) return;
+                    if (mid) seen.add(mid);
+                    chips.push(
+                        `<span class="participants-chip clickable" onclick="viewRecord('${escapeHtml(String(r.id))}')" title="查看 ${escapeHtml(r.member_name || '')} 的紀錄">${escapeHtml(r.member_name || '其他學員')}</span>`
+                    );
+                });
+
+                // 若 coRecords 內補不齊（例如僅有一筆紀錄但 participants 紀載多人），用 participants 補齊（不可點）
+                if (chips.length === 1 && participantsArr.length > 0) {
+                    participantsArr.forEach(p => {
+                        const pid = p.memberId != null ? String(p.memberId) : (p.member_id != null ? String(p.member_id) : null);
+                        if (pid && seen.has(pid)) return;
+                        const pname = p.memberName || p.member_name || '其他學員';
+                        if (pid) seen.add(pid);
+                        chips.push(`<span class="participants-chip">${escapeHtml(pname)}</span>`);
+                    });
+                }
+
+                // 1 對 1 且沒同場其他學員 → 不顯示
+                if (chips.length > 1 || fmtInfo.value !== '1-on-1') {
+                    participantsBar = `
+                        <div class="participants-bar ${fmtInfo.cls}">
+                            <span class="participants-label">${fmtInfo.label}</span>
+                            ${chips.join('')}
+                        </div>
+                    `;
+                }
+            }
 
             // — 左欄：照片 —
             let leftCol = '';
@@ -1335,6 +1528,10 @@
                         <div class="info-label">📋 課種</div>
                         <div class="info-value">${config.name}</div>
                     </div>
+                    <div class="detail-info-row">
+                        <div class="info-label">👥 形式</div>
+                        <div class="info-value">${fmtInfo.label}</div>
+                    </div>
                     ${record.training_focus ? `
                     <div class="detail-info-row">
                         <div class="info-label">🎯 訓練主軸</div>
@@ -1385,6 +1582,7 @@
             let bodyHtml = '';
             if (photos.length > 0) {
                 bodyHtml = `
+                    ${participantsBar}
                     <div class="detail-two-col">
                         <div class="detail-col-left">
                             ${contentHtml}
@@ -1398,6 +1596,7 @@
             } else {
                 bodyHtml = `
                     <div>
+                        ${participantsBar}
                         ${rightCol}
                         ${contentHtml}
                         ${adminAlert}
