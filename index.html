@@ -938,7 +938,9 @@
         // ============================================
         const CONFIG = {
             LIFF_ID: '2007947083-YgZ9QQRn',
-            EDGE_FUNCTION_URL: 'https://mnjilhpztnowaplggvkk.supabase.co/functions/v1/class-record-api',
+            // 2026-05-14 Wave5/Step8 R1 cutover Edge → Zeabur (rollback：改回 https://mnjilhpztnowaplggvkk.supabase.co/functions/v1/class-record-api)
+            EDGE_FUNCTION_URL: 'https://class-record-hendia.zeabur.app/',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uamlsaHB6dG5vd2FwbGdndmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MDA0ODYsImV4cCI6MjA4MTI3NjQ4Nn0.X3e9DF3iT2KUR9ma3_Ins01vG607R155v0xia8hO_Qg',
             DEBUG_MODE: false
         };
 
@@ -985,7 +987,7 @@
   } catch(e) {}
   const _body = { action, ...(params || {}) };
   if (_uid && !_body.lineUid) _body.lineUid = _uid;
-  const _headers = { 'Content-Type': 'application/json' };
+  const _headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY, 'apikey': CONFIG.SUPABASE_ANON_KEY };
   if (_idToken) _headers['X-Line-IdToken'] = _idToken;
 
             const response = await fetch(CONFIG.EDGE_FUNCTION_URL, {
